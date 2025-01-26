@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Işılın Meyve Bahçesi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Işılın Meyve Bahçesi</h1>
+    <div id="game-info">
+        <div class="info-box">
+            <h3>Seviye: <span id="current-level">1</span></h3>
+            <h3>Kalan Hamle: <span id="swaps-left">15</span></h3>
+        </div>
+        <div class="info-box">
+            <h3>Hedefler:</h3>
+            <div id="objectives"></div>
+        </div>
+    </div>
+    <div id="game-board"></div>
+    <button onclick="resetGame()">Yeni Oyun</button>
+
+    <script src="script.js"></script>
+</body>
+</html>
