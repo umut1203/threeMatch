@@ -91,7 +91,7 @@ function createBoard() {
             candy.textContent = getValidCandy(row, col);
 
             candy.addEventListener('mousedown', startDrag);
-            candy.addEventListener('touchstart', startDrag);
+            candy.addEventListener('touchstart', startDrag, { passive: false });
 
             gameBoard.appendChild(candy);
             board[row][col] = candy;
@@ -127,7 +127,7 @@ function startDrag(event) {
 
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
-    document.addEventListener('touchmove', handleDragMove);
+    document.addEventListener('touchmove', handleDragMove, { passive: false });
     document.addEventListener('touchend', handleDragEnd);
 }
 
@@ -139,11 +139,13 @@ function handleDragMove(event) {
     const dx = clientX - dragStartPosition.x;
     const dy = clientY - dragStartPosition.y;
 
+    // Clear previous valid target
     if(validSwapTarget) {
         validSwapTarget.classList.remove('valid-swap');
         validSwapTarget = null;
     }
 
+    // Only consider horizontal/vertical swaps
     if(Math.abs(dx) < DRAG_THRESHOLD && Math.abs(dy) < DRAG_THRESHOLD) return;
 
     const row = parseInt(selectedCandy.dataset.row);
@@ -151,12 +153,13 @@ function handleDragMove(event) {
     let targetRow = row;
     let targetCol = col;
 
-    if(Math.abs(dx) > Math.abs(dy)) {
+    if(Math.abs(dx) > Math.abs(dy)) { // Horizontal
         targetCol += dx > 0 ? 1 : -1;
-    } else {
+    } else { // Vertical
         targetRow += dy > 0 ? 1 : -1;
     }
 
+    // Validate target position
     if(targetRow >= 0 && targetRow < boardSize &&
        targetCol >= 0 && targetCol < boardSize) {
         validSwapTarget = board[targetRow][targetCol];
@@ -168,6 +171,7 @@ function handleDragEnd(event) {
     if(!selectedCandy) return;
     event.preventDefault();
 
+    // Cleanup event listeners
     document.removeEventListener('mousemove', handleDragMove);
     document.removeEventListener('mouseup', handleDragEnd);
     document.removeEventListener('touchmove', handleDragMove);
@@ -182,6 +186,7 @@ function handleDragEnd(event) {
 }
 
 function executeSwap(targetCandy) {
+    // Guard checks
     if(!selectedCandy || !targetCandy) {
         selectedCandy = null;
         return;
@@ -191,8 +196,11 @@ function executeSwap(targetCandy) {
         return;
     }
 
+    // Store references to avoid them becoming null in delayed callbacks
     const candy1 = selectedCandy;
     const candy2 = targetCandy;
+
+    // We can safely reset the global selectedCandy now.
     selectedCandy = null;
 
     const row1 = parseInt(candy1.dataset.row);
@@ -200,11 +208,13 @@ function executeSwap(targetCandy) {
     const row2 = parseInt(candy2.dataset.row);
     const col2 = parseInt(candy2.dataset.col);
 
+    // Only allow adjacent swaps
     if(Math.abs(row1 - row2) + Math.abs(col1 - col2) !== 1) return;
 
     isProcessing = true;
     swapCandies(candy1, candy2, (success) => {
         if(!success) {
+            // Animate invalid swap
             candy1.classList.add('shake', 'invalid');
             candy2.classList.add('shake', 'invalid');
             setTimeout(() => {
@@ -233,6 +243,7 @@ function swapCandies(candy1, candy2, callback) {
             callback(true);
             setTimeout(fillBoard, 500);
         } else {
+            // Revert swap
             candy1.textContent = original1;
             candy2.textContent = original2;
             remainingSwaps--;
@@ -251,6 +262,7 @@ function checkMatches() {
     let matched = Array.from({length: boardSize}, () => Array(boardSize).fill(false));
     let totalMatched = 0;
 
+    // Horizontal check
     for(let row = 0; row < boardSize; row++) {
         for(let col = 0; col < boardSize; col++) {
             if(matched[row][col] || board[row][col].textContent === '') continue;
@@ -270,6 +282,7 @@ function checkMatches() {
         }
     }
 
+    // Vertical check
     for(let col = 0; col < boardSize; col++) {
         for(let row = 0; row < boardSize; row++) {
             if(matched[row][col] || board[row][col].textContent === '') continue;
@@ -283,7 +296,7 @@ function checkMatches() {
             if(matchLength >= 3) {
                 totalMatched += matchLength;
                 for(let i = 0; i < matchLength; i++) {
-                    matched[row + i][col] = true; 
+                    matched[row + i][col] = true;
                 }
             }
         }
@@ -347,24 +360,13 @@ function fillBoard() {
             if(board[row][col].textContent === '') {
                 emptySpots++;
             } else if(emptySpots > 0) {
-                const targetRow = row + emptySpots;
-                board[targetRow][col].textContent = board[row][col].textContent;
+                board[row + emptySpots][col].textContent = board[row][col].textContent;
                 board[row][col].textContent = '';
-                
-                board[targetRow][col].classList.add('sliding');
-                setTimeout(() => {
-                    board[targetRow][col].classList.remove('sliding');
-                }, 400);
             }
         }
 
         for(let row = 0; row < emptySpots; row++) {
             board[row][col].textContent = colors[Math.floor(Math.random() * colors.length)];
-            
-            board[row][col].classList.add('falling');
-            setTimeout(() => {
-                board[row][col].classList.remove('falling');
-            }, 800);
         }
     }
 
@@ -382,4 +384,5 @@ function resetGame() {
     initializeLevel();
 }
 
+// Initialize the game
 initializeLevel();
